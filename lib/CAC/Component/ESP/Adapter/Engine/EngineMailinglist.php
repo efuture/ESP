@@ -3,6 +3,7 @@
 namespace CAC\Component\ESP\Adapter\Engine;
 
 use CAC\Component\ESP\MailinglistAdapterInterface;
+use CAC\Component\ESP\Api\Engine\EngineApi;
 
 class EngineMailinglist implements MailinglistAdapterInterface
 {
@@ -13,17 +14,26 @@ class EngineMailinglist implements MailinglistAdapterInterface
 
     private $options = array();
 
-    public function __construct(EngineApi $api)
+    /**
+     * @param EngineApi $api
+     * @param array $options
+     */
+    public function __construct(EngineApi $api, $options = array())
     {
         $this->api = $api;
-        $this->options = array(
-            'mailinglist' => 2,
-            'confirmed' => false,
-
+        $this->options = array_replace_recursive(
+            array(
+                'mailinglist' => null,
+                'confirmed' => false,
+            ),
+            $options
         );
     }
 
-
+    /**
+     * (non-PHPdoc)
+     * @see \CAC\Component\ESP\MailinglistAdapterInterface::subscribe()
+     */
     public function subscribe($user)
     {
         if (isset($user['mailinglist'])) {
@@ -42,6 +52,10 @@ class EngineMailinglist implements MailinglistAdapterInterface
         return $this->api->subscribeUser($user, $mailinglistId, $confirmed);
     }
 
+    /**
+     * (non-PHPdoc)
+     * @see \CAC\Component\ESP\MailinglistAdapterInterface::unsubscribe()
+     */
     public function unsubscribe($user) {
         if (isset($user['mailinglist'])) {
             $mailinglistId = $user['mailinglist'];
@@ -63,6 +77,19 @@ class EngineMailinglist implements MailinglistAdapterInterface
         }
 
         return $this->api->unsubscribeUser($user['email'], $mailinglistId, $confirmed);
+    }
+
+    /**
+     * (non-PHPdoc)
+     * @see \CAC\Component\ESP\MailinglistAdapterInterface::getSubscriber()
+     */
+    public function getSubscriber($email, array $fields = array(), $mailinglistId = null)
+    {
+        if (null == $mailinglistId) {
+            $mailinglistId = $this->options['mailinglist'];
+        }
+
+        return $this->api->getMailinglistUser($mailinglistId, $email, $fields);
     }
 
     /**
